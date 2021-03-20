@@ -15,11 +15,6 @@ from ocean.drawingstatic import DrawingStatic
 from engine.renderer import Renderer
 
 
-def keys_processor(key, x, y):
-    if key == b'\x1b':  # esc
-        sys.exit(0)
-
-
 def create_back_layer(filename: str, z: float, shader: int = 0) -> DrawingStatic:
     drawing_back = DrawingStatic(Renderer.create_texture_from_file(filename), shader=shader)
     drawing_back.position = np.array([0, 0., z])
@@ -113,7 +108,7 @@ def main():
 
     fish_shader_program = Renderer.create_shader(GL_VERTEX_SHADER, FISH_SHADER_CODE)
 
-    files = glob('/home/david/PycharmProjects/FishScanner/photos/*.jpg')
+    files = glob('./photos/*.jpg')
     for filename in files:
         frame = cv2.imread(filename)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -128,6 +123,11 @@ def main():
         drawings_list.append(drawing)
 
     glutDisplayFunc(partial(renderer.render, drawings_list))
+
+    def keys_processor(key, x, y):
+        if key == b'\x1b':  # esc
+            sys.exit(0)
+
     glutKeyboardFunc(keys_processor)
 
     timer_msec = int(1000 / 60)
