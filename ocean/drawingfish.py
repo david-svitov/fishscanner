@@ -38,18 +38,31 @@ class DrawingFish(Drawing):
         super(DrawingFish, self).__init__(texid, grid_x, grid_y, shader)
 
         self.scale = np.array([0.4, 0.3, 0.3])
-        self.vector = np.array([np.random.uniform(0.002, 0.003),
-                                np.random.uniform(-0.0006, 0.0006), 0.0])
+        self.vector = np.array([0, 0.02, 0.0])
 
         self.left = -1.5
         self.right = 1.5
         self.top = -0.7
         self.bottom = 0.3
-        self.position = np.array([np.random.uniform(self.left, self.right),
-                                  np.random.uniform(self.top, self.bottom), 0.])
+        self.position = np.array([np.random.uniform(self.left, self.right), -1, 0.])
         if np.random.randint(2) == 0:
-            self.vector[0] = -self.vector[0]
             self.scale[0] = -self.scale[0]
+
+        # Parameters for the initial animation
+        self.init_animation_step = 120
+        self.water_resistance = np.random.uniform(0.95, 0.98)
+
+    def _init_fish_velocity(self):
+        """
+        Setup initial values for velocity vector
+        :return:
+        """
+        self.vector = np.array([np.random.uniform(0.002, 0.003),
+                                np.random.uniform(0.001, 0.002), 0.0])
+        if self.scale[0] < 0:
+            self.vector[0] = -self.vector[0]
+        if np.random.randint(2) == 0:
+            self.vector[1] = -self.vector[1]
 
     def animation(self):
         """
@@ -58,12 +71,20 @@ class DrawingFish(Drawing):
         """
         self.position += self.vector
 
+        if self.init_animation_step >= 0:
+            self.init_animation_step -= 1
+            self.vector[1] *= self.water_resistance
+            # Finis init animation
+            if self.init_animation_step == 0:
+                self._init_fish_velocity()
+            return
+
         # If we near border go to the other direction
         if self.position[0] > self.right or self.position[0] < self.left:
             self.vector[0] = -self.vector[0]
             self.rotation_vector[1] = 5.0
 
-        if self.position[1] > self.top or self.position[1] < self.bottom:
+        if self.position[1] < self.top or self.position[1] > self.bottom:
             self.vector[1] = -self.vector[1]
 
         self.rotate[1] = (self.rotate[1] + self.rotation_vector[1]) % 360

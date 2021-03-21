@@ -104,7 +104,7 @@ class Renderer:
         return Renderer.create_texture(image)
 
     @staticmethod
-    def create_shader(shader_type, source: str):
+    def create_shader(shader_type, source: str) -> int:
         """
         Compile shader from string
         :param shader_type:  Type of shader

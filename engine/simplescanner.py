@@ -72,7 +72,7 @@ class SimpleScanner:
         frame = cv2.convertScaleAbs(frame, alpha=1.2, beta=10)
 
         gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        ret, mask = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY)
+        ret, mask = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
 
         # Remove markers
         marker_size = 130
