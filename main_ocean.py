@@ -1,6 +1,8 @@
 from functools import partial
 from glob import glob
+from queue import Queue
 from typing import List
+from threading import Thread
 
 import cv2
 import numpy as np
@@ -8,11 +10,11 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 
 from engine.drawing import Drawing
+from engine.renderer import Renderer
 from engine.simplescanner import SimpleScanner
 from ocean.drawingfish import DrawingFish, FISH_SHADER_CODE
 from ocean.drawingseaweed import DrawingSeaweed, SEAWEED_SHADER_CODE
 from ocean.drawingstatic import DrawingStatic
-from engine.renderer import Renderer
 
 
 def create_back_layer(filename: str, z: float, shader: int = 0) -> DrawingStatic:
@@ -117,16 +119,12 @@ def draw_ocean(drawings_list: List[Drawing]):
 
 
 def scan_from_frame(frame: np.ndarray,
-                    fish_shader_program: int,
-                    scanner: SimpleScanner,
-                    drawings_list: List[Drawing]):
+                    scanner: SimpleScanner) -> np.ndarray:
     """
     Scan a fish from a frame
     :param frame: BGR photo of the fish drawing
-    :param fish_shader_program: Shader to animate the fish
     :param scanner: Object of scanner to process photo
-    :param drawings_list: List of sprites to add new fish sprite
-    :return:
+    :return: Processed frame with a fish selected from the background
     """
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     try:
@@ -135,19 +133,14 @@ def scan_from_frame(frame: np.ndarray,
         print(e)
         return
     processed_frame = scanner.remove_background(processed_frame)
-    drawing = DrawingFish(Renderer.create_texture(processed_frame),
-                          shader=fish_shader_program)
-    drawings_list.append(drawing)
+    return processed_frame
 
 
-def scan_fish(fish_shader_program: int,
-              scanner: SimpleScanner,
-              drawings_list: List[Drawing]):
+def scan_fish(scanner: SimpleScanner, scanned_fish: Queue):
     """
     Capture frame from input device with index 0 and scan fish from it
-    :param fish_shader_program: Shader to animate the fish
     :param scanner: Object of scanner to process photo
-    :param drawings_list: List of sprites to add new fish sprite
+    :param scanned_fish: Queue with scanned fish
     :return:
     """
     camera = cv2.VideoCapture(1)
@@ -157,9 +150,9 @@ def scan_fish(fish_shader_program: int,
     if ret is False:
         raise IOError('Error reading frame from the camera')
 
-    scan_from_frame(frame, fish_shader_program, scanner, drawings_list)
+    processed_frame = scan_from_frame(frame, scanner)
     camera.release()
-    pass
+    scanned_fish.put(processed_frame)
 
 
 def main():
@@ -175,15 +168,21 @@ def main():
     files = glob('./photos/*.jpg')
     for filename in files:
         frame = cv2.imread(filename)
-        scan_from_frame(frame, fish_shader_program, scanner, drawings_list)
+        scanned_fish = scan_from_frame(frame, scanner)
+        drawing = DrawingFish(Renderer.create_texture(scanned_fish),
+                              shader=fish_shader_program)
+        drawings_list.append(drawing)
 
     glutDisplayFunc(partial(renderer.render, drawings_list))
+
+    scanned_fish_queue = Queue()
 
     def keys_processor(key, x, y):
         if key == b'\x1b':  # esc
             sys.exit(0)
-        if key == b'\r':  # inter
-            scan_fish(fish_shader_program, scanner, drawings_list)
+        if key == b'\r':  # enter
+            thread = Thread(target=scan_fish, args=(scanner, scanned_fish_queue))
+            thread.start()
 
     glutKeyboardFunc(keys_processor)
 
@@ -192,6 +191,13 @@ def main():
     def animate(value):
         renderer.animate(drawings_list)
         glutTimerFunc(timer_msec, animate, 0)
+
+        # Get fish scan from scanner thread
+        if scanned_fish_queue.qsize() > 0:
+            scanned_fish = scanned_fish_queue.get()
+            drawing = DrawingFish(Renderer.create_texture(scanned_fish),
+                                  shader=fish_shader_program)
+            drawings_list.append(drawing)
 
     glutTimerFunc(timer_msec, animate, 0)
 
