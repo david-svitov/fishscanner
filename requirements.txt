@@ -1,9 +1,4 @@
-certifi==2020.12.5
-mkl-fft==1.2.0
-mkl-random==1.1.1
-mkl-service==2.3.0
-numpy @ file:///tmp/build/80754af9/numpy_and_numpy_base_1603479632437/work
+numpy==1.19.2
 opencv-contrib-python==4.5.1.48
 opencv-python==4.5.1.48
 PyOpenGL==3.1.1a1
-six @ file:///tmp/build/80754af9/six_1605205313296/work

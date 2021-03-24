@@ -136,14 +136,15 @@ def scan_from_frame(frame: np.ndarray,
     return processed_frame
 
 
-def scan_fish(scanner: SimpleScanner, scanned_fish: Queue):
+def scan_fish(scanner: SimpleScanner, scanned_fish: Queue, camera_id: int = 0):
     """
     Capture frame from input device with index 0 and scan fish from it
     :param scanner: Object of scanner to process photo
     :param scanned_fish: Queue with scanned fish
+    :param camera_id: Id of the camera to capture a frame
     :return:
     """
-    camera = cv2.VideoCapture(1)
+    camera = cv2.VideoCapture(camera_id)
     if not camera.isOpened():
         raise EnvironmentError('Can not connect to the camera')
     ret, frame = camera.read()
@@ -164,13 +165,15 @@ def main():
     draw_ocean(drawings_list)
 
     fish_shader_program = Renderer.create_shader(GL_VERTEX_SHADER, FISH_SHADER_CODE)
+    bubble_texture = Renderer.create_texture_from_file('ocean/images/bubble.png')
 
     files = glob('./photos/*.jpg')
     for filename in files:
         frame = cv2.imread(filename)
         scanned_fish = scan_from_frame(frame, scanner)
         drawing = DrawingFish(Renderer.create_texture(scanned_fish),
-                              shader=fish_shader_program)
+                              shader=fish_shader_program,
+                              bubble_texture_id=bubble_texture)
         drawings_list.append(drawing)
 
     glutDisplayFunc(partial(renderer.render, drawings_list))
@@ -196,7 +199,8 @@ def main():
         if scanned_fish_queue.qsize() > 0:
             scanned_fish = scanned_fish_queue.get()
             drawing = DrawingFish(Renderer.create_texture(scanned_fish),
-                                  shader=fish_shader_program)
+                                  shader=fish_shader_program,
+                                  bubble_texture_id=bubble_texture)
             drawings_list.append(drawing)
 
     glutTimerFunc(timer_msec, animate, 0)

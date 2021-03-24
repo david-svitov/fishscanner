@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import List
 
 import OpenGL.arrays.vbo as glvbo
@@ -104,6 +105,13 @@ class Drawing:
         :return:
         """
         pass
+
+    def get_child_sprites(self) -> List[Drawing]:
+        """
+        Override this method to return all Drawings that child for the current one
+        :return: List of child drawings
+        """
+        return []
 
     @staticmethod
     def _mesh_create(grid_size_x=5, grid_size_y=5) -> List[float]:

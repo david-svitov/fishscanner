@@ -1,3 +1,4 @@
+from queue import Queue
 from typing import List
 
 import cv2
@@ -48,7 +49,21 @@ class Renderer:
         """
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        sorted_drawings_list = sorted(drawings_list, key=lambda x: x.position[2])
+        extended_drawings_list = []
+        drawings_queue = Queue()
+        for drawing in drawings_list:
+            extended_drawings_list.append(drawing)
+            for child in drawing.get_child_sprites():
+                drawings_queue.put(child)
+
+        while drawings_queue.qsize() > 0:
+            drawing = drawings_queue.get()
+            extended_drawings_list.append(drawing)
+            for child in drawing.get_child_sprites():
+                drawings_queue.put(child)
+
+
+        sorted_drawings_list = sorted(extended_drawings_list, key=lambda x: x.position[2])
         for drawing in sorted_drawings_list:
             drawing.render()
 
@@ -61,8 +76,17 @@ class Renderer:
         :param drawings_list: List of sprites to animate
         :return:
         """
+        drawings_queue = Queue()
         for drawing in drawings_list:
             drawing.animation()
+            for child in drawing.get_child_sprites():
+                drawings_queue.put(child)
+
+        while drawings_queue.qsize() > 0:
+            drawing = drawings_queue.get()
+            drawing.animation()
+            for child in drawing.get_child_sprites():
+                drawings_queue.put(child)
 
         glutPostRedisplay()
 

@@ -1,6 +1,9 @@
+from typing import List
+
 import numpy as np
 
 from engine.drawing import Drawing
+from ocean.drawingbubble import DrawingBubble
 
 FISH_SHADER_CODE = """
 uniform float timer;
@@ -27,30 +30,37 @@ class DrawingFish(Drawing):
     Sprite for drawing of fish
     """
 
-    def __init__(self, texid: int, grid_x: int = 5, grid_y: int = 5, shader: int = 0):
+    def __init__(self, texid: int, grid_x: int = 5, grid_y: int = 5, shader: int = 0,
+                 bubble_texture_id: int = 0):
         """
         Set default position of fish and select default vector of moving
         :param texid: ID of texture
         :param grid_x: Mesh elements along axis X
         :param grid_y: Mesh elements along axis Y
         :param shader: ID of shader. Select 0 if you need no shader
+        :param bubble_texture_id: ID of a bubble texture
         """
         super(DrawingFish, self).__init__(texid, grid_x, grid_y, shader)
 
         self.scale = np.array([0.4, 0.3, 0.3])
         self.vector = np.array([0, 0.02, 0.0])
 
-        self.left = -1.5
-        self.right = 1.5
-        self.top = -0.7
-        self.bottom = 0.3
-        self.position = np.array([np.random.uniform(self.left, self.right), -1, 0.])
+        self._left = -1.5
+        self._right = 1.5
+        self._top = -0.7
+        self._bottom = 0.3
+        self.position = np.array([np.random.uniform(self._left, self._right), -1, 0.])
         if np.random.randint(2) == 0:
             self.scale[0] = -self.scale[0]
 
         # Parameters for the initial animation
-        self.init_animation_step = 120
-        self.water_resistance = np.random.uniform(0.95, 0.98)
+        self._init_animation_step = 120
+        self._water_resistance = np.random.uniform(0.95, 0.98)
+
+        # To animate bubbles
+        self._bubble_texture_id = bubble_texture_id
+        self._bubble_random_frequency = 500
+        self._bubbles = []
 
     def _init_fish_velocity(self):
         """
@@ -64,6 +74,18 @@ class DrawingFish(Drawing):
         if np.random.randint(2) == 0:
             self.vector[1] = -self.vector[1]
 
+    def _process_bubbles(self):
+        # randomly create bubble
+        if np.random.randint(self._bubble_random_frequency) == 0:
+            bubble = DrawingBubble(self._bubble_texture_id,
+                                   start_x=self.position[0], start_y=self.position[1])
+            self._bubbles.append(bubble)
+
+        # delete bubbles when they left the screen
+        for bubble in self._bubbles:
+            if bubble.position[1] < -1:
+                self._bubbles.remove(bubble)
+
     def animation(self):
         """
         Logic of movement of the fish
@@ -71,23 +93,32 @@ class DrawingFish(Drawing):
         """
         self.position += self.vector
 
-        if self.init_animation_step >= 0:
-            self.init_animation_step -= 1
-            self.vector[1] *= self.water_resistance
+        if self._init_animation_step >= 0:
+            self._init_animation_step -= 1
+            self.vector[1] *= self._water_resistance
             # Finis init animation
-            if self.init_animation_step == 0:
+            if self._init_animation_step == 0:
                 self._init_fish_velocity()
             return
 
         # If we near border go to the other direction
-        if self.position[0] > self.right or self.position[0] < self.left:
+        if self.position[0] > self._right or self.position[0] < self._left:
             self.vector[0] = -self.vector[0]
             self.rotation_vector[1] = 5.0
 
-        if self.position[1] < self.top or self.position[1] > self.bottom:
+        if self.position[1] < self._top or self.position[1] > self._bottom:
             self.vector[1] = -self.vector[1]
 
         self.rotate[1] = (self.rotate[1] + self.rotation_vector[1]) % 360
 
         if self.rotate[1] % 180 == 0:
             self.rotation_vector[1] = 0.0
+
+        self._process_bubbles()
+
+    def get_child_sprites(self) -> List[Drawing]:
+        """
+        Return list of bubbles
+        :return: List of bubbles
+        """
+        return self._bubbles
