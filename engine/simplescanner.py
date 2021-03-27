@@ -36,7 +36,7 @@ class SimpleScanner:
                     _, _, _, bottom_left = corners
 
         if (top_left is None) or (top_right is None) or (bottom_right is None) or (bottom_left is None):
-            raise ValueError("Markers in the image not found")
+            raise ValueError("Markers in the image are not found")
         else:
             tr = (int(top_right[0]), int(top_right[1]))
             br = (int(bottom_right[0]), int(bottom_right[1]))
@@ -72,7 +72,7 @@ class SimpleScanner:
         frame = cv2.convertScaleAbs(frame, alpha=1.2, beta=10)
 
         gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        ret, mask = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY)
+        ret, mask = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
 
         # Remove markers
         marker_size = 130
