@@ -72,7 +72,9 @@ class SimpleScanner:
         frame = cv2.convertScaleAbs(frame, alpha=1.2, beta=10)
 
         gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        ret, mask = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
+        ret, mask = cv2.threshold(gray, 130, 255, cv2.THRESH_BINARY)
+        kernel = np.ones((5, 5), np.uint8)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
 
         # Remove markers
         marker_size = 130
