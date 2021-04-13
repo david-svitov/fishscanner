@@ -8,6 +8,9 @@ class SimpleScanner:
     """
 
     def __init__(self):
+        """
+        Initialize AR markers detector
+        """
         self._aruco_dict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
         self._aruco_params = cv2.aruco.DetectorParameters_create()
 
@@ -16,7 +19,19 @@ class SimpleScanner:
         self._marker_bottom_left_id = 4
         self._marker_bottom_right_id = 2
 
-    def scan(self, frame: np.ndarray) -> np.ndarray:
+        # Target size of scanned image in pixels
+        self.target_w = 800
+        self.target_h = 600
+
+    def scan(
+            self,
+            frame: np.ndarray,
+    ) -> np.ndarray:
+        """
+        Scan fish from image represented by ndarray
+        :param frame: Photo of a fish from an opencv image
+        :return: Aligned image of a fish
+        """
         corners, ids, rejected = cv2.aruco.detectMarkers(frame, self._aruco_dict,
                                                          parameters=self._aruco_params)
 
@@ -63,26 +78,35 @@ class SimpleScanner:
 
             return warped
 
-    def remove_background(self, frame: np.ndarray) -> np.ndarray:
-        target_w = 800
-        target_h = 600
-        frame = cv2.resize(frame, (target_w, target_h))
+    def remove_background(
+            self,
+            frame: np.ndarray,
+    ) -> np.ndarray:
+        """
+        Remove background from the fish image
+        :param frame: Aligned image of a fish
+        :return: OpenCV image with alpha channel
+        """
+        frame = cv2.resize(frame, (self.target_w, self.target_h))
 
         # TODO: remove this fix for final version
         frame = cv2.convertScaleAbs(frame, alpha=1.2, beta=10)
 
         gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        ret, mask = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
+        ret, mask = cv2.threshold(gray, 130, 255, cv2.THRESH_BINARY)
+        kernel = np.ones((5, 5), np.uint8)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
 
         # Remove markers
         marker_size = 130
         mask = cv2.rectangle(mask, (0, 0), (marker_size, marker_size), 255, -1)
-        mask = cv2.rectangle(mask, (target_w - marker_size, 0), (target_w, marker_size), 255, -1)
-        mask = cv2.rectangle(mask, (target_w - marker_size, target_h - marker_size), (target_w, target_h), 255, -1)
-        mask = cv2.rectangle(mask, (0, target_h - marker_size), (marker_size, target_h), 255, -1)
+        mask = cv2.rectangle(mask, (self.target_w - marker_size, 0), (self.target_w, marker_size), 255, -1)
+        mask = cv2.rectangle(mask, (self.target_w - marker_size, self.target_h - marker_size),
+                             (self.target_w, self.target_h), 255, -1)
+        mask = cv2.rectangle(mask, (0, self.target_h - marker_size), (marker_size, self.target_h), 255, -1)
 
         mask_filled = mask.copy()
-        cv2.floodFill(mask_filled, np.zeros((target_h + 2, target_w + 2), np.uint8), (0, 0), 0)
+        cv2.floodFill(mask_filled, np.zeros((self.target_h + 2, self.target_w + 2), np.uint8), (0, 0), 0)
         mask_filled += 255 - mask
 
         filtered_frame = cv2.cvtColor(frame, cv2.COLOR_RGB2RGBA)

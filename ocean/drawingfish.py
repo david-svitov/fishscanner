@@ -30,8 +30,14 @@ class DrawingFish(Drawing):
     Sprite for drawing of fish
     """
 
-    def __init__(self, texid: int, grid_x: int = 5, grid_y: int = 5, shader: int = 0,
-                 bubble_texture_id: int = 0):
+    def __init__(
+            self,
+            texid: int,
+            grid_x: int = 5,
+            grid_y: int = 5,
+            shader: int = 0,
+            bubble_texture_id: int = 0,
+    ):
         """
         Set default position of fish and select default vector of moving
         :param texid: ID of texture
@@ -66,7 +72,7 @@ class DrawingFish(Drawing):
         self._bubble_speed_y = -0.01
         self._bubbles = []
 
-    def _init_fish_velocity(self):
+    def _init_fish_velocity(self) -> None:
         """
         Setup initial values for velocity vector
         :return:
@@ -82,7 +88,7 @@ class DrawingFish(Drawing):
         self._bubble_deviation_x = 0.1
         self._bubble_speed_y = -0.005
 
-    def _process_bubbles(self):
+    def _process_bubbles(self) -> None:
         # randomly create bubble
         if np.random.randint(int(self._bubble_random_frequency)) == 0:
             bubble_x = np.random.uniform(self.position[0], self.position[0] + self.scale[0]/2)
@@ -97,7 +103,7 @@ class DrawingFish(Drawing):
             if bubble.position[1] < -1:
                 self._bubbles.remove(bubble)
 
-    def animation(self):
+    def animation(self) -> None:
         """
         Logic of movement of the fish
         :return:
@@ -139,7 +145,7 @@ class DrawingFish(Drawing):
         """
         return self._bubbles
 
-    def go_away(self):
+    def go_away(self) -> None:
         """
         Start animation of fish swimming away
         :return:

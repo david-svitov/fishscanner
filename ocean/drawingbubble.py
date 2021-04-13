@@ -10,7 +10,12 @@ class DrawingBubble(Drawing):
     Sprite for drawing of bubble
     """
 
-    def __init__(self, texid: int, start_x: float = 0., start_y: float = 0.):
+    def __init__(
+            self,
+            texid: int,
+            start_x: float = 0.,
+            start_y: float = 0.,
+    ):
         """
         Set starting position for the bubble
         :param texid: ID of texture
@@ -29,8 +34,7 @@ class DrawingBubble(Drawing):
         self.frequency_x = 10
         self.deviation_x = 0.1
 
-
-    def animation(self):
+    def animation(self) -> None:
         """
         Logic of movement of the bubble
         :return:

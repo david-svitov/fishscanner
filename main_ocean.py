@@ -1,13 +1,13 @@
 from functools import partial
 from glob import glob
 from queue import Queue
-from typing import List, Optional, Callable
 from threading import Thread
+from typing import List, Optional, Callable
 
+import OpenGL.GL as gl
+import OpenGL.GLUT as glut
 import cv2
 import numpy as np
-from OpenGL.GL import *
-from OpenGL.GLUT import *
 
 from engine.drawing import Drawing
 from engine.renderer import Renderer
@@ -17,7 +17,11 @@ from ocean.drawingseaweed import DrawingSeaweed, SEAWEED_SHADER_CODE
 from ocean.drawingstatic import DrawingStatic
 
 
-def create_back_layer(filename: str, z: float, shader: int = 0) -> DrawingStatic:
+def create_back_layer(
+        filename: str,
+        z: float,
+        shader: int = 0,
+) -> DrawingStatic:
     """
     Create sprite for the scene background
     :param filename: Path to the background image
@@ -31,7 +35,10 @@ def create_back_layer(filename: str, z: float, shader: int = 0) -> DrawingStatic
     return drawing_back
 
 
-def draw_sails(drawings_list: List[Drawing], shader: int):
+def draw_sails(
+        drawings_list: List[Drawing],
+        shader: int,
+) -> None:
     """
     Support function to draw sails
     :param drawings_list: List of sprites to draw
@@ -54,13 +61,13 @@ def draw_sails(drawings_list: List[Drawing], shader: int):
     drawings_list.append(drawing)
 
 
-def draw_ocean(drawings_list: List[Drawing]):
+def draw_ocean(drawings_list: List[Drawing]) -> None:
     """
     Draw all the sprites in the ocean scene
     :param drawings_list: Lists of sprites to draw
     :return:
     """
-    seaweed_shader_program = Renderer.create_shader(GL_VERTEX_SHADER, SEAWEED_SHADER_CODE)
+    seaweed_shader_program = Renderer.create_shader(gl.GL_VERTEX_SHADER, SEAWEED_SHADER_CODE)
 
     drawings_list.append(create_back_layer('ocean/images/back_down.png', -0.8))
     drawings_list.append(create_back_layer('ocean/images/back_middle.png', -0.78))
@@ -118,8 +125,10 @@ def draw_ocean(drawings_list: List[Drawing]):
     drawings_list.append(drawing)
 
 
-def scan_from_frame(frame: np.ndarray,
-                    scanner: SimpleScanner) -> Optional[np.ndarray]:
+def scan_from_frame(
+        frame: np.ndarray,
+        scanner: SimpleScanner,
+) -> Optional[np.ndarray]:
     """
     Scan a fish from a frame
     :param frame: BGR photo of the fish drawing
@@ -136,7 +145,11 @@ def scan_from_frame(frame: np.ndarray,
     return processed_frame
 
 
-def scan_fish(scanner: SimpleScanner, scanned_fish: Queue, camera_id: int = 1):
+def scan_fish(
+        scanner: SimpleScanner,
+        scanned_fish: Queue,
+        camera_id: int = 1,
+) -> None:
     """
     Capture frame from input device with index 0 and scan fish from it
     :param scanner: Object of scanner to process photo
@@ -157,8 +170,13 @@ def scan_fish(scanner: SimpleScanner, scanned_fish: Queue, camera_id: int = 1):
         scanned_fish.put(processed_frame)
 
 
-def load_fish_from_files(scanner: SimpleScanner, drawings_list: List[Drawing], fish_queue: Queue,
-                         fish_shader_program: int = 0, bubble_texture: int = 0):
+def load_fish_from_files(
+        scanner: SimpleScanner,
+        drawings_list: List[Drawing],
+        fish_queue: Queue,
+        fish_shader_program: int = 0,
+        bubble_texture: int = 0,
+) -> None:
     """
     Load all the predrawing fish from the folder
     :param scanner: Object of scanner to process photos
@@ -171,6 +189,8 @@ def load_fish_from_files(scanner: SimpleScanner, drawings_list: List[Drawing], f
     files = glob('./photos/*.jpg')
     for filename in files:
         frame = cv2.imread(filename)
+        if frame is None:
+            raise ValueError(f'Error reading image with filename: {filename}')
         scanned_fish = scan_from_frame(frame, scanner)
         drawing = DrawingFish(Renderer.create_texture(scanned_fish),
                               shader=fish_shader_program,
@@ -179,7 +199,10 @@ def load_fish_from_files(scanner: SimpleScanner, drawings_list: List[Drawing], f
         fish_queue.put(drawing)
 
 
-def create_key_processor(scanner: SimpleScanner, scanned_fish_queue: Queue) -> Callable:
+def create_key_processor(
+        scanner: SimpleScanner,
+        scanned_fish_queue: Queue,
+) -> Callable:
     """
     Wrapper for keys processor function
     :param scanner: Object of scanner to process photos
@@ -188,16 +211,23 @@ def create_key_processor(scanner: SimpleScanner, scanned_fish_queue: Queue) -> C
     """
     def keys_processor(key, x, y):
         if key == b'\x1b':  # esc
-            sys.exit(0)
+            exit(0)
         if key == b'\r':  # enter
             thread = Thread(target=scan_fish, args=(scanner, scanned_fish_queue))
             thread.start()
     return keys_processor
 
 
-def create_animation_function(renderer: Renderer, drawings_list: List[Drawing], scanned_fish_queue: Queue,
-                              fish_queue: Queue, fish_limit: int, timer_msec: int,
-                              fish_shader_program: int = 0, bubble_texture: int = 0) -> Callable:
+def create_animation_function(
+        renderer: Renderer,
+        drawings_list: List[Drawing],
+        scanned_fish_queue: Queue,
+        fish_queue: Queue,
+        fish_limit: int,
+        timer_msec: int,
+        fish_shader_program: int = 0,
+        bubble_texture: int = 0,
+) -> Callable:
     """
     Wrapper for animation function
     :param renderer: Object of the Engine to draw all the objects
@@ -212,7 +242,7 @@ def create_animation_function(renderer: Renderer, drawings_list: List[Drawing], 
     """
     def animate(value):
         renderer.animate(drawings_list)
-        glutTimerFunc(timer_msec, animate, 0)
+        glut.glutTimerFunc(timer_msec, animate, 0)
 
         # Get fish scan from scanner thread
         if scanned_fish_queue.qsize() > 0:
@@ -237,8 +267,8 @@ def create_animation_function(renderer: Renderer, drawings_list: List[Drawing], 
 def main():
     scanner = SimpleScanner()
 
-    glClearColor(0.1, 0.1, 0.2, 1.0)
-    timer_msec = int(1000 / 60)
+    gl.glClearColor(0.1, 0.1, 0.2, 1.0)
+    timer_msec = int(1000 / 60) # 60 times per second
     renderer = Renderer()
     drawings_list = []
     fish_queue = Queue() # Queue to maintain order of the fish and kill the oldest ones
@@ -246,17 +276,18 @@ def main():
     scanned_fish_queue = Queue()
     draw_ocean(drawings_list)
 
-    fish_shader_program = Renderer.create_shader(GL_VERTEX_SHADER, FISH_SHADER_CODE)
+    fish_shader_program = Renderer.create_shader(gl.GL_VERTEX_SHADER, FISH_SHADER_CODE)
     bubble_texture = Renderer.create_texture_from_file('ocean/images/bubble.png')
     load_fish_from_files(scanner, drawings_list, fish_queue, fish_shader_program, bubble_texture)
 
-    glutDisplayFunc(partial(renderer.render, drawings_list))
-    glutIgnoreKeyRepeat(True)
-    glutKeyboardFunc(create_key_processor(scanner, scanned_fish_queue))
-    glutTimerFunc(timer_msec, create_animation_function(renderer, drawings_list, scanned_fish_queue, fish_queue,
-                                                        fish_limit, timer_msec, fish_shader_program, bubble_texture), 0)
+    glut.glutDisplayFunc(partial(renderer.render, drawings_list))
+    glut.glutIgnoreKeyRepeat(True)
+    glut.glutKeyboardFunc(create_key_processor(scanner, scanned_fish_queue))
+    glut.glutTimerFunc(timer_msec, create_animation_function(renderer, drawings_list, scanned_fish_queue,
+                                                             fish_queue, fish_limit, timer_msec,
+                                                             fish_shader_program, bubble_texture), 0)
 
-    glutMainLoop()
+    glut.glutMainLoop()
 
 
 if __name__ == '__main__':
