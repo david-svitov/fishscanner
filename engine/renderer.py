@@ -27,7 +27,7 @@ class Renderer:
         gl.glEnable(gl.GL_TEXTURE_2D)
         gl.glDisable(gl.GL_LIGHTING)
         gl.glEnable(gl.GL_BLEND)
-        gl.glBlendFunc(gl.L_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
         gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
 
         # Modify matrices for screen size
@@ -69,7 +69,7 @@ class Renderer:
             drawing.render()
 
         gl.glFlush()
-        gl.glutSwapBuffers()
+        glut.glutSwapBuffers()
 
     def animate(
             self,
