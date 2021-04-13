@@ -25,7 +25,13 @@ class DrawingSeaweed(Drawing):
     Sprite for seaweed
     """
 
-    def __init__(self, texid: int, grid_x: int = 5, grid_y: int = 5, shader: int = 0):
+    def __init__(
+            self,
+            texid: int,
+            grid_x: int = 5,
+            grid_y: int = 5,
+            shader: int = 0,
+    ):
         """
         Initialize seaweed as default sprite. All the magic happens in the shader
         :param texid: ID of texture
