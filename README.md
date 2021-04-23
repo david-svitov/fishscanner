@@ -1,5 +1,7 @@
 # FishScanner
 
+[![Youtube video demonstration](https://img.youtube.com/vi/ClF8CrXzJ8k/0.jpg)](https://www.youtube.com/watch?v=ClF8CrXzJ8k)
+
 This is an open-source project inspired by this [video](https://www.youtube.com/watch?v=ILrr8vToR9Y&feature=emb_logo) from  Workinman Interactive LLC.
 
 This repository allows you to build your own aquarium in which you can bring to life your drawings of fish.
